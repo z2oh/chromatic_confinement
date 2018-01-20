@@ -2,10 +2,10 @@ extern crate petgraph;
 
 use petgraph::Graph;
 use petgraph::graph::NodeIndex;
-use petgraph::dot::{Dot, Config};
+use petgraph::dot::Dot;
 
 fn main() {
-    let mut colors = vec![
+    let colors = vec![
         vec![128u8, 128u8, 128u8],
         vec![127u8, 0u8, 10u8],
         vec![150u8, 250u8, 250u8],
@@ -17,16 +17,16 @@ fn main() {
         vec![0u8, 0u8, 0u8],
     ];
 
-    let kd_tree = construct_kd_tree(colors, 3);
+    let (root_index, kd_tree) = construct_kd_tree(colors, 3);
     println!("{:?}", Dot::with_config(&kd_tree, &[]));
 }
 
-fn construct_kd_tree(mut v: Vec<Vec<u8>>, dimension: u8) -> Graph<Vec<u8>, u8> {
+fn construct_kd_tree(mut v: Vec<Vec<u8>>, dimension: u8) -> (NodeIndex, Graph<Vec<u8>, u8>) {
     let mut graph = Graph::<Vec<u8>, u8>::new();
 
     let root = construct_kd_tree_recursive(&mut v[..], &mut graph, 0, dimension);
 
-    return graph;
+    return (root, graph);
 }
 
 fn construct_kd_tree_recursive(v: &mut [Vec<u8>], mut graph: &mut Graph<Vec<u8>, u8>, current_dim: u8, max_dim: u8) -> NodeIndex {
