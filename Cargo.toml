@@ -5,3 +5,4 @@ authors = ["Jeremy Day <jadaytime@gmail.com>"]
 
 [dependencies]
 petgraph = "^0.4"
+image = "*"

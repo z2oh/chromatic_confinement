@@ -1,8 +1,14 @@
 extern crate petgraph;
+extern crate image;
+
+use image::{GenericImage, ImageBuffer};
 
 use petgraph::Graph;
 use petgraph::graph::NodeIndex;
 use petgraph::dot::Dot;
+
+use std::path::Path;
+use std::fs::File;
 
 fn main() {
     let colors = vec![
@@ -17,8 +23,66 @@ fn main() {
         vec![0u8, 0u8, 0u8],
     ];
 
-    let (root_index, kd_tree) = construct_kd_tree(colors, 3);
+    let css1 = vec![
+        vec![0x0,0x0,0x0],
+        vec![0xc0,0xc0,0xc0],
+        vec![0x80,0x80,0x80],
+        vec![0xff,0xff,0xff],
+        vec![0x80,0x00,0x00],
+        vec![0xff,0x00,0x00],
+        vec![0x80,0x00,0x80],
+        vec![0xff,0x00,0xff],
+        vec![0x00,0x80,0x00],
+        vec![0x00,0xff,0x00],
+        vec![0x80,0x80,0x00],
+        vec![0xff,0xff,0x00],
+        vec![0x00,0x00,0x80],
+        vec![0x00,0x00,0xff],
+        vec![0x00,0x80,0x80],
+        vec![0x00,0xff,0xff],
+    ];
+
+    let image_path = Path::new("/home/jaday/img.jpeg");
+    let image = image::open(image_path).unwrap();
+
+    let (img_x, img_y) = image.dimensions();
+
+    let mut img_buf = image::ImageBuffer::new(img_x, img_y);
+
+    for (x, y, rgb) in img_buf.enumerate_pixels_mut() {
+        let rgba = image.get_pixel(x, y).data;
+        let c = vec![rgba[0], rgba[1], rgba[2]];
+        let nn = return_nearest_naive(&css1, c);
+        *rgb = image::Rgba([nn[0], nn[1], nn[2], 255]);
+    }
+
+    let ref mut fout = File::create("img.png").unwrap();
+
+    image::ImageRgba8(img_buf).save(fout, image::PNG).unwrap();
+
+    let (root_idx, kd_tree) = construct_kd_tree(colors, 3);
     println!("{:?}", Dot::with_config(&kd_tree, &[]));
+}
+
+fn return_nearest_naive(colors: &Vec<Vec<u8>>, query: Vec<u8>) -> Vec<u8> {
+    fn dist_sq(a: &Vec<u8>, b: &Vec<u8>) -> u32 {
+        let mut sum: u32 = 0;
+        for (aa, bb) in a.iter().zip(b.iter()) {
+            let val: i32 = (*aa as i32) - (*bb as i32);
+            sum += (val * val) as u32;
+        }
+        return sum;
+    }
+    let mut min_dist = 255*255 + 255*255 + 255*255;
+    let mut idx = 0;
+    for (i, color) in colors.iter().enumerate() {
+        let dist = dist_sq(color, &query);
+        if dist < min_dist {
+            min_dist = dist;
+            idx = i;
+        }
+    }
+    return colors[idx].clone();
 }
 
 fn construct_kd_tree(mut v: Vec<Vec<u8>>, dimension: u8) -> (NodeIndex, Graph<Vec<u8>, u8>) {
