@@ -199,19 +199,18 @@ fn main() {
         }
     }
 
-    let image_path = Path::new("/home/jaday/img.jpeg");
+    let image_path = Path::new("/home/jaday/img.jpg");
     let image = image::open(image_path).unwrap();
     let (img_x, img_y) = image.dimensions();
     let mut img_buf = image::ImageBuffer::new(img_x, img_y);
 
     if !naive {
         let kd_tree = construct_kd_tree(&mut color_vec[..], 3);
-        println!("{:?}", kd_tree);
         for (x, y, rgb) in img_buf.enumerate_pixels_mut() {
             let rgba = image.get_pixel(x, y).data;
             let c = vec![rgba[0], rgba[1], rgba[2]];
-            let color_tup = query_nearest_neighbor(&c[..], &kd_tree, 3, kd_tree.root().id());
-            *rgb = image::Rgba([color_tup.0, color_tup.1, color_tup.2, 255]);
+            let color_tup = query_nearest_neighbor(&c[..], &kd_tree, 3, kd_tree.root()).value();
+            *rgb = image::Rgba([color_tup[0], color_tup[1], color_tup[2], 255]);
         }
     }
     else if naive {
@@ -310,8 +309,8 @@ fn construct_kd_tree_recursive(v: &mut [Vec<u8>], node: &mut NodeMut<Vec<u8>>, c
     construct_kd_tree_recursive(&mut v[middle+1..], &mut child, next_dim, max_dimension);
 }
 
-fn query_nearest_neighbor<'a>(q: &[u8], kd_tree: &'a Tree<Vec<u8>>, max_dimension: usize, root_node_id: NodeId) -> &'a NodeRef<Vec<u8>> {
-   let mut current_node = kd_tree.root(); 
+fn query_nearest_neighbor<'a>(q: &[u8], kd_tree: &'a Tree<Vec<u8>>, max_dimension: usize, root_node_ref: NodeRef<'a, Vec<u8>>) -> NodeRef<'a, Vec<u8>> {
+   let mut current_node = root_node_ref; 
    let mut current_dim = 0;
    loop {
        // We have reached a leaf node.
@@ -345,7 +344,7 @@ fn query_nearest_neighbor<'a>(q: &[u8], kd_tree: &'a Tree<Vec<u8>>, max_dimensio
 
    loop {
        // We have reached the root.
-       if current_node.id() == root_node_id {
+       if current_node == root_node_ref {
            break;
        }
        let parent_node = current_node.parent().unwrap();
@@ -357,13 +356,24 @@ fn query_nearest_neighbor<'a>(q: &[u8], kd_tree: &'a Tree<Vec<u8>>, max_dimensio
        }
 
        let plane_dist: u32 = (parent_val[current_dim] as i32 - best_guess_node.value()[current_dim] as i32).abs() as u32;
-       if plane_dist * plane_dist < best_guess_dist {
-           let second_best_guess_node = query_nearest_neighbor(q, kd_tree, max_dimension, current_node.next_sibling().unwrap().id());
+       if plane_dist * plane_dist < best_guess_dist && current_node.has_siblings() {
+           let mut node_id_option = current_node.next_sibling();
+           if node_id_option.is_none() {
+               node_id_option = current_node.prev_sibling();
+           }
+           let second_best_guess_node = query_nearest_neighbor(q, kd_tree, max_dimension, node_id_option.unwrap());
            let second_best_guess_dist = dist_sq(q, second_best_guess_node.value());
            if second_best_guess_dist < best_guess_dist {
                best_guess_dist = second_best_guess_dist;
                best_guess_node = second_best_guess_node;
            }
+       }
+
+       if current_dim == 0 {
+           current_dim = max_dimension - 1;
+       }
+       else {
+           current_dim -= 1;
        }
 
        current_node = parent_node;
