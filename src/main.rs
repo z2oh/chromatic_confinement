@@ -94,7 +94,7 @@ fn main() {
     }
 }
 
-static mut DIST_CALLS: u32 = 0;
+static mut DIST_CALLS: u64 = 0;
 
 fn dist_sq(a: &[u8], b: &[u8]) -> u32 {
     unsafe {
