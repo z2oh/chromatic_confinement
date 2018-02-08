@@ -63,8 +63,6 @@ fn main() {
         _ => true,
     };
 
-    println!("{}", naive);
-
     let image_path = Path::new(matches.value_of("input").unwrap());
     let image = image::open(image_path).unwrap();
     let (img_x, img_y) = image.dimensions();
