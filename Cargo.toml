@@ -6,3 +6,4 @@ authors = ["Jeremy Day <jadaytime@gmail.com>"]
 [dependencies]
 ego-tree = "*"
 image = "*"
+clap = "*"
