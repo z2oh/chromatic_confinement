@@ -18,6 +18,8 @@ You can pass the `-n` flag to run the slow version of this algorithm. This is th
 
 Example usage (can be run immediately after cloning):
 
-`cargo run --release -- -c color_files/1kcolors.colors -i images/bridge_4096_2304.jpg -o image.png` will produce this image (in `./image.png`):
+`cargo run --release -- -c color_files/1kcolors.colors -i images/bridge_4096_2304.jpg -o image.png` will produce this image (in `./image.png`, the image you see here is scaled down to reduce load time of this repo. Image provided courtesy of [Julian Herzog](https://julianherzog.com/), see [LICENSE](images/LICENSE) for more information):
 
-[Exmaple output, image of bridge quantized to 1024 random colors](example_out/image.png)
+![Exmaple output, scaled to 25% size, image of bridge quantized to 1024 random colors](example_out/image.png)
+
+If you would like to try out this code on huge images, I recommend searching for images on Wikimedia Commons. [Here is a 30,000 x 23,756 pixel image of Starry Night](https://commons.wikimedia.org/wiki/File:Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg), for example.
