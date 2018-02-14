@@ -66,7 +66,7 @@ fn main() {
 
     for line in colors_file.lines() {
         let color: Vec<u8> = line.unwrap()
-            .split(",")
+            .split(',')
             .map(|v| v.parse::<u8>().unwrap())
             .collect();
         color_vec.push(color);
@@ -98,7 +98,7 @@ fn main() {
     }
 
     let save_path = Path::new(matches.value_of("output").unwrap());
-    let ref mut fout = File::create(save_path).unwrap();
+    let fout = &mut File::create(save_path).unwrap();
 
     image::ImageRgba8(img_buf).save(fout, image::PNG).unwrap();
 
@@ -115,13 +115,13 @@ fn dist_sq(a: &[u8], b: &[u8]) -> u32 {
     }
     let mut sum: u32 = 0;
     for (aa, bb) in a.iter().zip(b.iter()) {
-        let val: i32 = (*aa as i32) - (*bb as i32);
+        let val: i32 = i32::from(*aa) - i32::from(*bb);
         sum += (val * val) as u32;
     }
-    return sum;
+    sum
 }
 
-fn return_nearest_naive(colors: &Vec<Vec<u8>>, query: &[u8]) -> Vec<u8> {
+fn return_nearest_naive(colors: &[Vec<u8>], query: &[u8]) -> Vec<u8> {
     let mut min_dist = 255 * 255 + 255 * 255 + 255 * 255;
     let mut idx = 0;
     for (i, color) in colors.iter().enumerate() {
@@ -131,7 +131,7 @@ fn return_nearest_naive(colors: &Vec<Vec<u8>>, query: &[u8]) -> Vec<u8> {
             idx = i;
         }
     }
-    return colors[idx].clone();
+    colors[idx].clone()
 }
 
 fn construct_kd_tree(v: &mut [Vec<u8>], dimension: usize) -> Tree<Vec<u8>> {
@@ -221,8 +221,8 @@ fn query_nearest_neighbor<'a>(
             best_guess_node = parent_node;
         }
 
-        let plane_dist: u32 = (parent_val[current_dim] as i32
-            - best_guess_node.value()[current_dim] as i32)
+        let plane_dist: u32 = (i32::from(parent_val[current_dim])
+            - i32::from(best_guess_node.value()[current_dim]))
             .abs() as u32;
         if plane_dist * plane_dist < best_guess_dist {
             let mut node_id_option = current_node.next_sibling();
@@ -249,5 +249,5 @@ fn query_nearest_neighbor<'a>(
         current_node = parent_node;
     }
 
-    return best_guess_node;
+    best_guess_node
 }
