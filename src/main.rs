@@ -156,76 +156,76 @@ fn construct_kd_tree_recursive(v: &mut [Vec<u8>], node: &mut NodeMut<Vec<u8>>, c
 }
 
 fn query_nearest_neighbor<'a>(q: &[u8], kd_tree: &'a Tree<Vec<u8>>, max_dimension: usize, root_node_ref: NodeRef<'a, Vec<u8>>) -> NodeRef<'a, Vec<u8>> {
-   let mut current_node = root_node_ref; 
-   let mut current_dim = 0;
-   loop {
+    let mut current_node = root_node_ref; 
+    let mut current_dim = 0;
+    loop {
        // We have reached a leaf node.
-       if !current_node.has_children() {
-           break;
-       }
-       let left_child = current_node.first_child().unwrap();
-       if !left_child.has_siblings() {
-           current_node = left_child;
-           current_dim += 1;
-           if current_dim == max_dimension {
-               current_dim = 0;
-           }
-       }
-       else {
-           if q[current_dim] < current_node.value()[current_dim] {
-               current_node = left_child;
-           }
-           else {
-               current_node = current_node.last_child().unwrap();
-           }
-           current_dim += 1;
-           if current_dim == max_dimension {
-               current_dim = 0;
-           }
-       }
-   }
+        if !current_node.has_children() {
+            break;
+        }
+        let left_child = current_node.first_child().unwrap();
+        if !left_child.has_siblings() {
+            current_node = left_child;
+            current_dim += 1;
+            if current_dim == max_dimension {
+                current_dim = 0;
+            }
+        }
+        else {
+            if q[current_dim] < current_node.value()[current_dim] {
+                current_node = left_child;
+            }
+            else {
+                current_node = current_node.last_child().unwrap();
+            }
+            current_dim += 1;
+            if current_dim == max_dimension {
+                current_dim = 0;
+            }
+        }
+    }
 
-   let mut best_guess_node = current_node;
-   let mut best_guess_dist = dist_sq(q, current_node.value());
+    let mut best_guess_node = current_node;
+    let mut best_guess_dist = dist_sq(q, current_node.value());
 
-   loop {
-       // We have reached the root.
-       if current_node == root_node_ref {
-           break;
-       }
-       let parent_node = current_node.parent().unwrap();
-       let parent_val = parent_node.value();
-       let parent_dist = dist_sq(q, parent_val);
-       if parent_dist < best_guess_dist{
-           best_guess_dist = parent_dist;
-           best_guess_node = parent_node;
-       }
+    loop {
+        // We have reached the root.
+        if current_node == root_node_ref {
+            break;
+        }
+        let parent_node = current_node.parent().unwrap();
+        let parent_val = parent_node.value();
+        let parent_dist = dist_sq(q, parent_val);
+        if parent_dist < best_guess_dist{
+            best_guess_dist = parent_dist;
+            best_guess_node = parent_node;
+        }
 
-       let plane_dist: u32 = (parent_val[current_dim] as i32 - best_guess_node.value()[current_dim] as i32).abs() as u32;
-       if plane_dist * plane_dist < best_guess_dist {
-           let mut node_id_option = current_node.next_sibling();
-           if node_id_option.is_none() {
-               node_id_option = current_node.prev_sibling();
-           }
-           if !node_id_option.is_none() {
-               let second_best_guess_node = query_nearest_neighbor(q, kd_tree, max_dimension, node_id_option.unwrap());
-               let second_best_guess_dist = dist_sq(q, second_best_guess_node.value());
-               if second_best_guess_dist < best_guess_dist {
-                   best_guess_dist = second_best_guess_dist;
-                   best_guess_node = second_best_guess_node;
-               }
-           }
-       }
+        let plane_dist: u32 = (parent_val[current_dim] as i32 - best_guess_node.value()[current_dim] as i32).abs() as u32;
+        if plane_dist * plane_dist < best_guess_dist {
+            let mut node_id_option = current_node.next_sibling();
+            if node_id_option.is_none() {
+                node_id_option = current_node.prev_sibling();
+            }
+            if !node_id_option.is_none() {
+                let second_best_guess_node = query_nearest_neighbor(q, kd_tree, max_dimension, node_id_option.unwrap());
+                let second_best_guess_dist = dist_sq(q, second_best_guess_node.value());
+                if second_best_guess_dist < best_guess_dist {
+                    best_guess_dist = second_best_guess_dist;
+                    best_guess_node = second_best_guess_node;
+                }
+            }
+        }
 
-       if current_dim == 0 {
-           current_dim = max_dimension - 1;
-       }
-       else {
-           current_dim -= 1;
-       }
+        if current_dim == 0 {
+            current_dim = max_dimension - 1;
+        }
+        else {
+            current_dim -= 1;
+        }
 
-       current_node = parent_node;
-   }
+        current_node = parent_node;
+    }
 
-   return best_guess_node;
+    return best_guess_node;
 }
